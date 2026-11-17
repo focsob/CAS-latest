@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# 案件管理系統　一鍵安裝程式
+# 案件分析系統（Case Analysis System，CAS）一鍵安裝程式
 # 用法：curl -fsSL <安裝檔網址> | sudo bash -s -- <安裝金鑰>
 # 適用：Ubuntu／Debian（使用 systemd）全新或已有其他網站的伺服器
 # - 伺服器已安裝 Caddy 或 nginx：會加入本系統的網站設定，不會改動其他網站
@@ -36,7 +36,7 @@ new_pw(){  # $1 名稱；$2 = 不可相同的密碼
 }
 trap 'printf "\n"; warn "安裝未完成。如需協助，請把上面的訊息交予系統管理員。"' ERR
 
-printf '\033[1;31m\n  案件管理系統　一鍵安裝程式\033[0m\n  Copyright by 27456\n'
+printf '\033[1;31m\n  案件分析系統（CAS）　一鍵安裝程式\033[0m\n  Copyright by 27456\n'
 [ "$(id -u)" -eq 0 ] || die "請以管理員權限執行（在指令前加上 sudo）"
 [ -r "$TTY" ] || die "未能讀取鍵盤輸入，請於終端機直接執行安裝指令"
 command -v apt-get >/dev/null && command -v systemctl >/dev/null || die "本安裝程式只支援使用 apt 及 systemd 的 Ubuntu／Debian"
