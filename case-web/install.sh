@@ -255,10 +255,25 @@ else
 fi
 chown -R "$NAME:$NAME" "$APPDIR/data"; chmod 750 "$APPDIR/data"; chown "root:$NAME" "$APPDIR"; chmod 750 "$APPDIR"
 
+# 網頁埠由系統（systemd）代守：程式重新啟動或者更新期間，新連線排隊等候，網頁唔會出現 502
+cat > "/etc/systemd/system/$NAME.socket" <<EOF
+[Unit]
+Description=Case management system web port ($TEAM)
+
+[Socket]
+ListenStream=127.0.0.1:$PORT
+NoDelay=true
+Backlog=1024
+
+[Install]
+WantedBy=sockets.target
+EOF
+rm -f "/etc/systemd/system/$NAME.service.d/socket.conf" "$APPDIR/no_socket"  # 自動更新加過嘅設定（而家已經寫入主設定）
 cat > "/etc/systemd/system/$NAME.service" <<EOF
 [Unit]
 Description=Case management system ($TEAM)
-After=network.target
+After=network.target $NAME.socket
+Requires=$NAME.socket
 
 [Service]
 User=$NAME
@@ -266,9 +281,10 @@ Group=$NAME
 WorkingDirectory=$APPDIR/app
 Environment=CW_DATA=$APPDIR/data
 Environment=CW_COOKIE_SECURE=$( [ "$TLS" = none ] && echo 0 || echo 1 )
-ExecStart=$APPDIR/venv/bin/uvicorn app:app --host 127.0.0.1 --port $PORT --workers 1
+ExecStart=$APPDIR/venv/bin/python $APPDIR/app/serve.py --port $PORT
 Restart=always
 RestartSec=3
+TimeoutStopSec=45
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
@@ -305,6 +321,8 @@ install -m 755 "$REL/deploy/web_site.sh" "$APPDIR/web_site.sh"
 APPDIR="$APPDIR" SERVICE="$NAME" RUNAS="$NAME" bash "$REL/deploy/system_deps.sh" || warn "部分系統套件未能安裝（PDF 或文字辨識功能可能受影響）"
 echo "$LATEST" > "$APPDIR/release.sha"
 systemctl daemon-reload
+systemctl stop "$NAME" 2>/dev/null || true   # 重新安裝：舊程式可能自己開住個埠，要先停，系統先可以接手
+systemctl enable -q --now "$NAME.socket"
 systemctl enable -q "$NAME" "$NAME-update.timer"
 systemctl restart "$NAME"; systemctl start "$NAME-update.timer"
 
