@@ -11,7 +11,7 @@
 set -euo pipefail
 umask 022
 
-URL_BASE="https://raw.githubusercontent.com/focsob/database/main/case-web"
+URL_BASE="https://raw.githubusercontent.com/focsob/CAS-latest/main/case-web"
 KEY="${1:-}"
 TTY=/dev/tty
 
